@@ -74,11 +74,11 @@ REDIS_URL=redis://localhost:6379
 
 4. Запуск сервера
 
-Локально у режимі розробки:
+### Локально у режимі розробки:
 
 npm run start:dev
 
-Через Docker:
+### Через Docker:
 
 docker-compose up --build
 
@@ -190,4 +190,5 @@ Email: savinov.stas2001@gmail.com
 
 
 GitHub: Septors
+
 
