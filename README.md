@@ -2,15 +2,15 @@
 
 ## Проєкт для створення та управління:
 
-=Проєктами
+- Проєктами
 
-=Задачами
+- Задачами
 
-=Відповідями до задач
+- Відповідями до задач
 
-=Коментарями
+- Коментарями
 
-=Користувачами
+- Користувачами
 
 ### Забезпечує аутентифікацію та авторизацію через JWT (Bearer Token) та роботу в реальному часі через WebSocket.
 
@@ -18,37 +18,37 @@
 
 ### Основні:
 
-- NestJS — серверний фреймворк на Node.js
+- NestJS - серверний фреймворк на Node.js
 
-- TypeScript — статична типізація
+- TypeScript - статична типізація
 
-- PostgreSQL — реляційна база даних
+- PostgreSQL - реляційна база даних
 
-- Prisma ORM — робота з БД
+- Prisma ORM - робота з БД
 
-- Redis — кешування, rate limiting, blacklist токенів
+- Redis - кешування, rate limiting, blacklist токенів
 
-- WebSocket (Socket.IO) — реальний час
+- WebSocket (Socket.IO) - реальний час
 
-- Docker & Docker Compose — контейнеризація та оркестрація
+- Docker & Docker Compose - контейнеризація та оркестрація
 
-- JWT — аутентифікація та авторизація
+- JWT - аутентифікація та авторизація
 
-- Rate limiting — захист від DDoS та спаму
+- Rate limiting - захист від DDoS та спаму
 
 ### Безпека та утиліти:
 
-- cors, helmet — захист HTTP-заголовків і CORS
+- cors, helmet - захист HTTP-заголовків і CORS
 
-- bcrypt — хешування паролів
+- bcrypt - хешування паролів
 
-- multer — завантаження файлів
+- multer - завантаження файлів
 
-- cookie-parser — робота з кукі
+- cookie-parser - робота з кукі
 
-- sanitize-html — захист від XSS
+- sanitize-html - захист від XSS
 
-- class-validator — валідація DTO
+- class-validator - валідація DTO
 
 ## Запуск проєкту
 
@@ -152,17 +152,17 @@ DELETE	/comment/{commentId}	Видалити коментар
 
 ## Моделі даних (DTO)
 
-CreateTaskDto — дані для створення задачі (title, description, projectId, createrId, file)
+CreateTaskDto - дані для створення задачі (title, description, projectId, createrId, file)
 
-ResponseTaskDto — задача з id, коментарями, відповідями, файлами
+ResponseTaskDto - задача з id, коментарями, відповідями, файлами
 
-UserDto — користувач
+UserDto - користувач
 
-MemberDto — член проєкту з роллю
+MemberDto - член проєкту з роллю
 
-ResponseCommentDto — коментар
+ResponseCommentDto - коментар
 
-ResponseAuthPayloadDto — токен та дані користувача після входу
+ResponseAuthPayloadDto - токен та дані користувача після входу
 
 ## Авторизація
 
@@ -190,3 +190,4 @@ Email: savinov.stas2001@gmail.com
 
 
 GitHub: Septors
+
