@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ProjectRole {
+  OWNER
+  CREATER
+  EXECUTOR
+  READER
+}
+
+model User {
+  id                  Int      @id @default(autoincrement())
+  email               String   @unique
+  password            String
+  role                UserRole @default(USER)
+  currentRefreshToken String?
+
+  profile  Profile?
+  projects Project[] // Например, созданные проекты
+
+  ProjectUser ProjectUser[]
+  asnwers AnswerToTask[]
+
+  tasks         Task[] // Например, как автор задачи (если есть)
+  assignedTasks AssignedTasks[]
+
+  writtenComments  Comment[] @relation("CommentAuthor")
+  receivedComments Comment[] @relation("CommentTarget") // ← исправлено
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Profile {
+  id        Int      @id @default(autoincrement())
+  name      String
+  avatar    String
+  about     String
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id          Int    @id @default(autoincrement())
+  name        String
+  description String
+  status      String
+
+  createrId Int 
+  user      User? @relation(fields: [createrId], references: [id])
+
+  tasks         Task[]
+  projectUser   ProjectUser[]
+  assignedTasks AssignedTasks[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProjectUser {
+  id        Int @id @default(autoincrement())
+  userId    Int
+  projectId Int
+
+  userRole ProjectRole @default(READER)
+
+  user    User    @relation(fields: [userId], references: [id])
+  project Project @relation(fields: [projectId], references: [id],onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, projectId]) // ← исправлено
+}
+
+model Task {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  file        String?
+  status      String
+
+  projectId Int
+  createrId Int
+
+  comments Comment[]
+  assignedTasks AssignedTasks[]
+  answers AnswerToTask[]
+
+  project   Project @relation(fields: [projectId], references: [id])
+  creater   User @relation(fields: [createrId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AssignedTasks {
+  id        Int  @id @default(autoincrement())
+  userId    Int?
+  taskId    Int
+  projectId Int
+
+  task    Task    @relation(fields: [taskId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+  project Project @relation(fields: [projectId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([taskId, projectId, userId])
+}
+
+model AnswerToTask{
+  id Int @id @default(autoincrement())
+
+  title String
+  description String 
+  file String?
+
+  userId Int
+  taskId Int 
+
+  user User @relation(fields:[userId], references:[id])
+  task Task @relation(fields:[taskId], references:[id])
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Comment {
+  id Int @id @default(autoincrement())
+
+  title       String // ← исправлено (была опечатка: titile)
+  description String
+  file        String?
+
+  // Self-relation
+  parentId Int?
+  parent   Comment?  @relation("CommentThread", fields: [parentId], references: [id])
+  children Comment[] @relation("CommentThread")
+
+  // Связь с Task
+  taskId Int
+  task   Task @relation(fields: [taskId], references: [id])
+
+  // Автор комментария
+  authorId Int
+  author   User @relation("CommentAuthor", fields: [authorId], references: [id])
+
+  // Кому адресован комментарий
+  targetId Int?
+  target   User? @relation("CommentTarget", fields: [targetId], references: [id])
+
+  createdAt DateTime @default(now())
+}

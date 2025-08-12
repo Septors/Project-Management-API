@@ -1,0 +1,970 @@
+openapi: 3.0.3
+info:
+  title: API проекту
+  version: 1.0.0
+  description: Повна документація API для автентифікації, коментарів, проектів і задач.
+
+servers:
+  - url: http://localhost:5000
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    # --- Auth ---
+    LoginUserDto:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          example: "Passw0rd1"
+
+    RegisterUserDto:
+      type: object
+      required:
+        - email
+        - password
+        - confirmPassword
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          example: "Passw0rd1"
+        confirmPassword:
+          type: string
+          example: "Passw0rd1"
+
+    UserDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        role:
+          type: string
+          example: user
+
+    ResponseAuthPayloadDto:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserDto'
+        accessToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIs...
+
+    # --- Comment ---
+    CreateCommentDto:
+      type: object
+      required:
+        - title
+        - description
+        - taskId
+        - authorId
+      properties:
+        title:
+          type: string
+          example: "Заголовок коментаря"
+        description:
+          type: string
+          example: "Текст коментаря"
+        parentId:
+          type: integer
+          nullable: true
+          example: 1
+        taskId:
+          type: integer
+          example: 42
+        authorId:
+          type: integer
+          example: 3
+        targetId:
+          type: integer
+          nullable: true
+          example: 5
+
+    UpdateCommentDto:
+      allOf:
+        - $ref: '#/components/schemas/CreateCommentDto'
+      description: Часткове оновлення
+
+    ResponseCommentDto:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        file:
+          type: string
+          nullable: true
+          example: "/uploads/file.png"
+        taskId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-08-11T20:00:00Z"
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+            email:
+              type: string
+        target:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            email:
+              type: string
+
+    # --- Project ---
+    MemberDto:
+      type: object
+      required:
+        - userId
+        - userRole
+      properties:
+        userId:
+          type: integer
+          example: 3
+        projectId:
+          type: integer
+          nullable: true
+          example: 7
+        userRole:
+          type: string
+          example: manager
+
+    CreateProjectDto:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          example: "Проект А"
+        description:
+          type: string
+          example: "Опис проекту"
+        status:
+          type: string
+          nullable: true
+          example: active
+        member:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemberDto'
+
+    UpdateProjectDto:
+      allOf:
+        - $ref: '#/components/schemas/CreateProjectDto'
+      description: Часткове оновлення
+
+    ResponseProjectDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Проект А"
+        description:
+          type: string
+          example: "Опис проекту"
+        status:
+          type: string
+          example: active
+        user:
+          $ref: '#/components/schemas/UserDto'
+        tasks:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ResponseTaskDto'
+        projectUser:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/UserDto'
+
+    # --- Task ---
+    CreateTaskDto:
+      type: object
+      required:
+        - title
+        - description
+        - projectId
+        - createrId
+      properties:
+        title:
+          type: string
+          example: "Задача 1"
+        description:
+          type: string
+          example: "Опис задачі"
+        file:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+          example: "new"
+        projectId:
+          type: integer
+          example: 1
+        createrId:
+          type: integer
+          example: 3
+        comments:
+          type: array
+          items:
+            type: object
+          nullable: true
+        answers:
+          type: array
+          items:
+            type: object
+          nullable: true
+        assignedTask:
+          type: array
+          items:
+            type: object
+          nullable: true
+
+    UpdateTaskDto:
+      allOf:
+        - $ref: '#/components/schemas/CreateTaskDto'
+      description: Часткове оновлення
+
+    ResponseTaskDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+        description:
+          type: string
+        file:
+          type: string
+          nullable: true
+        status:
+          type: string
+        comments:
+          type: array
+          nullable: true
+          items:
+            type: object
+        answers:
+          type: array
+          nullable: true
+          items:
+            type: object
+        assignedTasks:
+          type: array
+          nullable: true
+          items:
+            type: object
+
+paths:
+
+  # --- Auth ---
+  /auth:
+    get:
+      summary: Отримати інформацію про поточного користувача
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Дані користувача
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '401':
+          description: Неавторизований
+
+  /auth/login:
+    post:
+      summary: Логін користувача
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUserDto'
+      responses:
+        '200':
+          description: Токен доступу та інформація користувача
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseAuthPayloadDto'
+        '401':
+          description: Невірні облікові дані
+
+  /auth/register:
+    post:
+      summary: Реєстрація користувача
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserDto'
+      responses:
+        '201':
+          description: Користувач зареєстрований
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseAuthPayloadDto'
+        '400':
+          description: Помилка валідації
+
+  /auth/logout:
+    post:
+      summary: Вихід користувача
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Повідомлення про вихід
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Вихід успішний"
+        '401':
+          description: Неавторизований
+
+  /auth/update-token:
+    post:
+      summary: Оновлення токена доступу
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Новий токен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIs...
+        '401':
+          description: Неавторизований
+
+  # --- Comment ---
+  /comment/tasks/{taskId}:
+    get:
+      summary: Отримати коментарі задачі
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список коментарів
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    commentsList:
+                      $ref: '#/components/schemas/ResponseCommentDto'
+                    fileUrl:
+                      type: string
+                      nullable: true
+        '401':
+          description: Неавторизований
+
+  /comment:
+    post:
+      summary: Створити коментар
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                parentId:
+                  type: integer
+                  nullable: true
+                taskId:
+                  type: integer
+                authorId:
+                  type: integer
+                targetId:
+                  type: integer
+                  nullable: true
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Створено коментар
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comment:
+                    $ref: '#/components/schemas/ResponseCommentDto'
+                  fileUrl:
+                    type: string
+                    nullable: true
+        '401':
+          description: Неавторизований
+
+  /comment/{commentId}:
+    patch:
+      summary: Оновити коментар
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                parentId:
+                  type: integer
+                  nullable: true
+                taskId:
+                  type: integer
+                authorId:
+                  type: integer
+                targetId:
+                  type: integer
+                  nullable: true
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Оновлено коментар
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comment:
+                    $ref: '#/components/schemas/ResponseCommentDto'
+                  fileUrl:
+                    type: string
+                    nullable: true
+        '401':
+          description: Неавторизований
+
+    delete:
+      summary: Видалити коментар
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Повідомлення про видалення
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Коментар видалено"
+        '401':
+          description: Неавторизований
+
+  # --- Project ---
+  /project/{projectId}:
+    get:
+      summary: Отримати проект за ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Деталі проекту
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseProjectDto'
+        '401':
+          description: Неавторизований
+
+    patch:
+      summary: Оновити проект
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectDto'
+      responses:
+        '200':
+          description: Оновлений проект
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateProjectDto'
+        '401':
+          description: Неавторизований
+
+    delete:
+      summary: Видалити проект
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Повідомлення про видалення
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Проект видалено"
+        '401':
+          description: Неавторизований
+
+  /project:
+    post:
+      summary: Створити проект
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectDto'
+      responses:
+        '201':
+          description: Створено проект
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseProjectDto'
+        '401':
+          description: Неавторизований
+
+  /project/{projectId}/users:
+    post:
+      summary: Додати користувачів до проекту (треба бути creatер-ом)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                member:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/MemberDto'
+      responses:
+        '200':
+          description: Оновлений список користувачів проекту
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemberDto'
+        '401':
+          description: Неавторизований
+
+  /project/{projectId}/user/{userId}:
+    patch:
+      summary: Змінити роль користувача у проекті (треба бути creatер-ом)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+              example: "manager"
+      responses:
+        '200':
+          description: Повідомлення про зміну ролі
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Роль користувача змінено"
+        '401':
+          description: Неавторизований
+
+  # --- Task ---
+  /task/projects/{projectId}:
+  get:
+    summary: Отримати задачі проекту
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      '200':
+        description: Список задач
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  task:
+                    $ref: '#/components/schemas/ResponseTaskDto'
+                  file:
+                    type: string
+                    nullable: true
+      '401':
+        description: Неавторизований
+
+  post:
+    summary: Створити задачу в проекті
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+              file:
+                type: string
+                format: binary
+              projectId:
+                type: integer
+              createrId:
+                type: integer
+    responses:
+      '201':
+        description: Створена задача
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task:
+                  $ref: '#/components/schemas/ResponseTaskDto'
+                file:
+                  type: string
+                  nullable: true
+      '401':
+        description: Неавторизований
+
+  /task/{taskId}/projects/{projectId}/users:
+    post:
+      summary: Додати користувача до задачі (треба бути creatер-ом)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  example: 5
+      responses:
+        '200':
+          description: Повідомлення про додавання користувача
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Неавторизований
+
+  /task/{taskId}/projects/{projectId}:
+    patch:
+      summary: Оновити задачу (треба бути creatер-ом)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Оновлена задача
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task:
+                    $ref: '#/components/schemas/ResponseTaskDto'
+                  file:
+                    type: string
+                    nullable: true
+        '401':
+          description: Неавторизований
+
+    delete:
+      summary: Видалити задачу (треба бути creatер-ом)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Повідомлення про видалення
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Задачу видалено"
+        '401':
+          description: Неавторизований
+
+  /task/answers:
+    post:
+      summary: Створити відповідь до задачі
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+                userId:
+                  type: string
+                taskId:
+                  type: string
+      responses:
+        '201':
+          description: Створена відповідь
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    $ref: '#/components/schemas/ResponseAsnwersDto'
+                  file:
+                    type: string
+                    nullable: true
+        '401':
+          description: Неавторизований
+
+  /task/{taskId}/answers:
+    patch:
+      summary: Оновити відповідь до задачі
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+                userId:
+                  type: string
+                taskId:
+                  type: string
+      responses:
+        '200':
+          description: Оновлена відповідь
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    $ref: '#/components/schemas/ResponseAsnwersDto'
+                  file:
+                    type: string
+                    nullable: true
+        '401':
+          description: Неавторизований
